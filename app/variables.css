@@ -1,0 +1,16 @@
+.light {
+    --primary: hsl(220, 100%, 50%);
+    --header-bg: hsl(288, 86%, 45%);
+    --accent: hsl(280, 85%, 60%);
+    --background: hsl(0, 0%, 100%);
+    --foreground: hsl(220, 15%, 15%);
+    --border: hsl(220, 20%, 85%);
+}
+.dark {
+    --primary: hsl(220, 100%, 50%);
+    --header-bg: hsl(288, 86%, 45%);
+    --accent: hsl(280, 85%, 40%);
+    --background: hsl(220, 15%, 10%);
+    --foreground: hsl(220, 10%, 95%);
+    --border: hsl(220, 20%, 15%);
+}
