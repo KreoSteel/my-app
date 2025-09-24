@@ -25,12 +25,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${comfortaa.variable} antialiased font-sans`}
+        className={`${comfortaa.variable} antialiased font-sans min-h-screen`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Header />
-          {children}
-          <ThemeSwitcher />
+          <main className="pt-20 flex flex-col items-center justify-center min-h-screen">
+            {children}
+          </main>
         </ThemeProvider>
       </body>
     </html>

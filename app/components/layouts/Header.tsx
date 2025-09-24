@@ -16,13 +16,14 @@ import { UserCog } from "lucide-react"
 export default function Header() {
     const { setTheme, theme } = useTheme()
     return (
-        <header className="bg-header-bg p-6 relative fixed">
+        <header className="bg-header-bg p-6 fixed top-0 left-0 w-full z-50 shadow-header-purple">
             <ul className="flex gap-10 items-center justify-center text-header-foreground text-xl font-bold">
                 <li><Link href="/">Home</Link></li>
                 <li><Link href="/friends">Friends</Link></li>
                 <li><Link href="/list">List</Link></li>
                 <li><Link href="/rating">Rating</Link></li>
                 <li><Link href="/profile">Profile</Link></li>
+                <li><Link href="/authors">Authors</Link></li>
             </ul>
             <div className="absolute left-5 top-5">
                 <DropdownMenu>
