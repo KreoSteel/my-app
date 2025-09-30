@@ -1,0 +1,84 @@
+import { NextRequest } from "next/server";
+import { ApiResponses } from "@/app/api/lib/response";
+import pool from "@/lib/supabase";
+import type { BookWithDetails } from "@/app/types/BookWithDetails";
+
+export const runtime = 'nodejs';
+
+// GET /api/books - Supports optional filters: q, minRating, minPages, maxPages, limit
+export async function GET(req: NextRequest) {
+    try {
+        const { searchParams } = new URL(req.url);
+
+        const q = searchParams.get('q');
+        const minRating = searchParams.get('minRating');
+        const minPages = searchParams.get('minPages');
+        const maxPages = searchParams.get('maxPages');
+        const limit = parseInt(searchParams.get('limit') || '50', 10);
+
+        let sql = `
+            SELECT 
+                b.id,
+                b.title,
+                b.pages,
+                b.author_id,
+                b.category_id,
+                b.publish_date,
+                b.rating,
+                b.rating_count,
+                b.cover_url,
+                b.annotation,
+                b.created_at,
+                b.updated_at,
+                a.full_name AS author_name,
+                c.title AS category_title
+            FROM books b
+            LEFT JOIN authors a ON b.author_id = a.id
+            LEFT JOIN categories c ON b.category_id = c.id
+            WHERE 1=1
+        `;
+
+        const params: any[] = [];
+        let i = 1;
+
+        if (q && q.trim().length >= 2) {
+            sql += ` AND (
+                LOWER(b.title) LIKE LOWER($${i}) OR
+                LOWER(a.full_name) LIKE LOWER($${i}) OR
+                LOWER(c.title) LIKE LOWER($${i})
+            )`;
+            params.push(`%${q}%`);
+            i++;
+        }
+        if (minRating) { sql += ` AND b.rating >= $${i}`; params.push(Number(minRating)); i++; }
+        if (minPages)  { sql += ` AND b.pages >= $${i}`; params.push(Number(minPages)); i++; }
+        if (maxPages)  { sql += ` AND b.pages <= $${i}`; params.push(Number(maxPages)); i++; }
+
+        sql += ` ORDER BY b.title ASC LIMIT $${i}`;
+        params.push(limit);
+
+        const { rows } = await pool.query(sql, params);
+
+        const books: BookWithDetails[] = rows.map(r => ({
+            id: r.id,
+            title: r.title,
+            pages: r.pages,
+            author_id: r.author_id,
+            category_id: r.category_id,
+            publish_date: r.publish_date,
+            rating: r.rating,
+            rating_count: r.rating_count,
+            cover_url: r.cover_url,
+            annotation: r.annotation,
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+            author: r.author_name ? { id: r.author_id, full_name: r.author_name } : undefined,
+            category: r.category_title ? { id: r.category_id, title: r.category_title } : undefined,
+        }));
+
+        return ApiResponses.ok(books, "Books retrieved successfully");
+    } catch (error) {
+        console.error("Error getting all books:", error);
+        return ApiResponses.internalServerError("Failed to get all books");
+    }
+}

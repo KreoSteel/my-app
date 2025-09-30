@@ -9,10 +9,15 @@ import React from "react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ChevronDownIcon } from "lucide-react"
 import { SubmitHandler, useForm } from "react-hook-form"
-import { redirect } from "next/navigation"
+import { createAuthor, useAuthors } from "@/app/services/authors"
+import AuthorCards from "@/app/components/cards/AuthorCard"
+import ReusableList from "@/app/components/layouts/ReusableList"
+import { useQueryClient } from "@tanstack/react-query"
 
 
 export default function AuthorsPage() {
+    const { data: authors, isLoading: authorsLoading, error: authorsError, refetch: refetchAuthors } = useAuthors()
+    const queryClient = useQueryClient()
     type Inputs = {
         full_name: string
         description: string
@@ -32,8 +37,11 @@ export default function AuthorsPage() {
             }
         })
         
+        const [isLoading, setIsLoading] = React.useState(false)
+        const [error, setError] = React.useState<string | null>(null)
+        const [success, setSuccess] = React.useState<string | null>(null)
+
         const onSubmit: SubmitHandler<Inputs> = async (data) => {
-            // Format date to dd-mm-yyyy
             const formatDate = (date: Date) => {
                 const day = date.getDate().toString().padStart(2, '0')
                 const month = (date.getMonth() + 1).toString().padStart(2, '0')
@@ -42,14 +50,34 @@ export default function AuthorsPage() {
             }
 
             const formattedData = {
-                ...data,
-                date_of_birth: data.date_of_birth 
+                full_name: data.full_name,
+                description: data.description,
+                birth_date: data.date_of_birth
                     ? formatDate(data.date_of_birth)
                     : undefined
             }
-            console.log("Form data:", formattedData)
-            // await createAuthor(formattedData.full_name, formattedData.description, formattedData.date_of_birth)
-            // redirect("/")
+            
+            setIsLoading(true)
+            setError(null)
+            setSuccess(null)
+            
+            try {
+                
+                console.log("Form data:", formattedData)
+                await createAuthor(formattedData)
+                console.log('Author created successfully')
+                setSuccess('Author created successfully!')
+                // Reset form
+                setValue('full_name', '')
+                setValue('description', '')
+                setValue('date_of_birth', undefined)
+            } catch (err: any) {
+                console.error('Error creating author:', err)
+                setError(err.message || 'Failed to create author. Please try again.')
+            } finally {
+                queryClient.invalidateQueries({ queryKey: ['authors'] })
+                setIsLoading(false)
+            }
         }
     const [open, setOpen] = React.useState(false)
     const [date, setDate] = React.useState<Date | undefined>(
@@ -60,11 +88,22 @@ export default function AuthorsPage() {
         <Section>
             <h1>Authors</h1>
             <p>List of authors will be displayed here</p>
+            <Button onClick={() => refetchAuthors()}>{authorsLoading ? 'Loading...' : 'Refresh'}</Button>
             <Accordion type="single" collapsible>
                 <AccordionItem value="item-1">
                     <AccordionTrigger className="text-2xl font-bold">Create Author</AccordionTrigger>
                     <AccordionContent>
                         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
+                            {error && (
+                                <div className="w-1/3 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                                    {error}
+                                </div>
+                            )}
+                            {success && (
+                                <div className="w-1/3 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                                    {success}
+                                </div>
+                            )}
                             <div className="flex flex-col gap-2">
                             <label className="text-sm font-medium placeholder:text-gray-500">Author's Name</label>
                             <Input type="text" className="w-1/3" required {...register("full_name")}/>
@@ -100,11 +139,18 @@ export default function AuthorsPage() {
                                     </PopoverContent>
                                 </Popover>
                             </div>
-                            <Button className="w-fit" type="submit">Create</Button>
+                            <Button 
+                                className="w-fit" 
+                                type="submit" 
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Creating...' : 'Create'}
+                            </Button>
                         </form>
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>
+            <ReusableList items={authors || []} error={authorsError} isLoading={authorsLoading} CardComponent={AuthorCards} getItemKey={(item) => item.id} />
         </Section>
     )
 }

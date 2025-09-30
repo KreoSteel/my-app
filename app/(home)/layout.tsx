@@ -1,6 +1,11 @@
 "use client"
 import { useEffect, useState } from "react"
-import { verifyToken } from "../api/lib/jwt"
+import { isTokenValid } from "@/lib/jwt-client"
+import { QueryClient } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
+
+const queryClient = new QueryClient()
+
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     const [isAuth, setIsAuth] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
@@ -13,22 +18,25 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
             }
 
             const token = localStorage.getItem('accessToken')
-            
+
             if (!token) {
                 window.location.href = '/auth/login'
                 return
             }
 
             try {
-                await verifyToken(token)
-                setIsAuth(true)
+                if (isTokenValid(token)) {
+                    setIsAuth(true)
+                } else {
+                    window.location.href = '/auth/login'
+                }
             } catch (error) {
                 window.location.href = '/auth/login'
             } finally {
                 setIsLoading(false)
             }
         }
-        
+
         checkAuth()
     }, [])
 
@@ -45,6 +53,8 @@ export default function HomeLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <AuthGuard>{children}</AuthGuard>
+        <QueryClientProvider client={queryClient}>
+            <AuthGuard>{children}</AuthGuard>
+        </QueryClientProvider>
     );
 }

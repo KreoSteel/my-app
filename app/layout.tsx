@@ -3,6 +3,7 @@ import { Comfortaa } from "next/font/google";
 import Header from "./components/layouts/Header";
 import { ThemeProvider } from "next-themes";
 import ThemeSwitcher from "./components/layouts/ThemeSwitcher";
+import { ToastContainer } from "./components/ui/toast";
 import "./globals.css";
 
 const comfortaa = Comfortaa({
@@ -32,6 +33,7 @@ export default function RootLayout({
           <main className="pt-20 flex flex-col items-center justify-center min-h-screen">
             {children}
           </main>
+          <ToastContainer />
         </ThemeProvider>
       </body>
     </html>

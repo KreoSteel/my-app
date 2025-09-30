@@ -19,11 +19,12 @@ export default function Header() {
         <header className="bg-header-bg p-6 fixed top-0 left-0 w-full z-50 shadow-header-purple">
             <ul className="flex gap-10 items-center justify-center text-header-foreground text-xl font-bold">
                 <li><Link href="/">Home</Link></li>
+                <li><Link href="/my-list">My List</Link></li>
+                <li><Link href="/list">Browse Books</Link></li>
+                <li><Link href="/authors">Authors</Link></li>
                 <li><Link href="/friends">Friends</Link></li>
-                <li><Link href="/list">List</Link></li>
                 <li><Link href="/rating">Rating</Link></li>
                 <li><Link href="/profile">Profile</Link></li>
-                <li><Link href="/authors">Authors</Link></li>
             </ul>
             <div className="absolute left-5 top-5">
                 <DropdownMenu>
@@ -32,7 +33,10 @@ export default function Header() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56" align="start">
                         <Link href="/profile">
-                        <DropdownMenuItem>My Account</DropdownMenuItem>
+                            <DropdownMenuItem>My Account</DropdownMenuItem>
+                        </Link>
+                        <Link href="/my-list">
+                            <DropdownMenuItem>My Reading List</DropdownMenuItem>
                         </Link>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => setTheme(`${theme === "light" ? "dark" : "light"}`)}>{theme === "light" ? "Dark Theme" : "Light Theme"}</DropdownMenuItem>

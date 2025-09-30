@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import registerUser from "../../lib/auth";
 import { generateAccessToken, generateRefreshToken } from "../../lib/jwt";
+import { ApiResponses } from "../../lib/response";
 
 export const runtime = 'nodejs'
 
@@ -9,13 +10,14 @@ export async function POST(req: NextRequest) {
         const { fullName, email, password } = await req.json();
 
         if (!fullName || !email || !password) {
-            return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
+            return ApiResponses.badRequest("Missing required fields", "Full name, email, and password are required");
         }
 
         const result = await registerUser.registerUser(fullName, email, password);
         if ('error' in result) {
-            const status = result.error === 'Email already in use' ? 409 : 500
-            return NextResponse.json({ message: result.error }, { status });
+            return result.error === 'Email already in use' 
+                ? ApiResponses.conflict(result.error, "An account with this email already exists")
+                : ApiResponses.internalServerError(result.error);
         }
 
         const payload = { sub: result.id, email: result.email, fullName: result.fullName }
@@ -25,14 +27,14 @@ export async function POST(req: NextRequest) {
         console.log('Access Token:', accessToken)
         console.log('Refresh Token:', refreshToken)
         
-        return NextResponse.json({ 
+        return ApiResponses.created({ 
             user: result, 
             accessToken, 
             refreshToken 
-        }, { status: 201 });
+        }, "User registered successfully");
 
     } catch (error) {
         console.error("Registration error:", error);
-        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+        return ApiResponses.internalServerError("Internal server error", "An unexpected error occurred during registration");
     }
 }
