@@ -8,12 +8,25 @@ import AccordionList from "@/app/components/layouts/AccordionList"
 import ReusableList from "@/app/components/layouts/ReusableList"
 import type { BookFilters } from "@/app/types/BookFilters"
 import BooksFilter from "@/app/components/forms/BooksFilter"
+// import { Pagination } from "@/app/types/Pagination"
 import { Grid3X3, List } from "lucide-react"
+import {
+    Pagination as ShadPagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationPrevious,
+    PaginationNext,
+} from "@/components/ui/pagination"
 
 export default function BooksPage() {
     const [filters, setFilters] = useState<BookFilters>({} as BookFilters)
-    const { data: books, isLoading: booksLoading, error: booksError } = useBooks(filters)
+    const [page, setPage] = useState(1)
+    const limit = 10
+    const { data, isLoading: booksLoading, error: booksError } = useBooks(filters, page, limit)
+    const books = data?.data || []
+    const pagination = data?.pagination
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+
 
     return (
         <Section>
@@ -91,8 +104,36 @@ export default function BooksPage() {
                             gridCols="3"
                         />
                     )}
+                    {/* Pager */}
+                    {pagination && (
+                        <div className="flex justify-center pt-4">
+                            <PaginationControls 
+                                page={pagination.currentPage} 
+                                totalPages={pagination.totalPages} 
+                                onChange={setPage}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         </Section>
+    )
+}
+
+function PaginationControls({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
+    const canPrev = page > 1
+    const canNext = page < totalPages
+    return (
+        <ShadPagination>
+            <PaginationContent>
+                <PaginationItem>
+                    <PaginationPrevious aria-disabled={!canPrev} onClick={() => canPrev && onChange(page - 1)} />
+                </PaginationItem>
+                <span className="px-3">Page {page} / {totalPages}</span>
+                <PaginationItem>
+                    <PaginationNext aria-disabled={!canNext} onClick={() => canNext && onChange(page + 1)} />
+                </PaginationItem>
+            </PaginationContent>
+        </ShadPagination>
     )
 }

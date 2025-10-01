@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { BookWithDetails } from "@/app/types/BookWithDetails";
 import type { BookFilters } from "@/app/types/BookFilters";
 import apiClient from "@/lib/http";
+import { Pagination } from "../types/Pagination";
 
 // Convert filters to query string
 function toQueryString(filters?: BookFilters) {
@@ -16,9 +17,9 @@ function toQueryString(filters?: BookFilters) {
     return qs ? `?${qs}` : "";
 }
 
-export function useBooks(filters?: BookFilters) {
+export function useBooks(filters?: BookFilters, page: number = 1, limit: number = 10, extraParams?: Record<string, string | number | undefined>) {
     return useQuery({
-        queryKey: ["books", filters],
+        queryKey: ["books", filters, page, limit, extraParams],
         queryFn: async () => {
             const hasQ = !!filters?.query && filters.query.trim().length > 0;
             const onlyQ =
@@ -27,10 +28,19 @@ export function useBooks(filters?: BookFilters) {
             const qs = onlyQ
                 ? (() => { const p = new URLSearchParams(); p.set('q', filters!.query!); return `?${p.toString()}`; })()
                 : toQueryString(filters);
-            const response = await apiClient.get<{ data: BookWithDetails[] }>(
-                `${basePath}${qs}`
+            const response = await apiClient.get<{
+                data: { data: BookWithDetails[]; pagination: Pagination }
+            }>(
+                `${basePath}${qs}`,
+                {
+                    params: {
+                        page,
+                        limit,
+                        ...extraParams
+                    }
+                }
             );
-            return response.data.data;
+            return response.data.data; // unwrap ApiResponse to { data, pagination }
         },
     });
 }

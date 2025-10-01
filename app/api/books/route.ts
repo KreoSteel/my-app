@@ -9,12 +9,14 @@ export const runtime = 'nodejs';
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
+        const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
+        const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 100);
+        const offset = (page - 1) * limit;
 
         const q = searchParams.get('q');
         const minRating = searchParams.get('minRating');
         const minPages = searchParams.get('minPages');
         const maxPages = searchParams.get('maxPages');
-        const limit = parseInt(searchParams.get('limit') || '50', 10);
 
         let sql = `
             SELECT 
@@ -31,7 +33,8 @@ export async function GET(req: NextRequest) {
                 b.created_at,
                 b.updated_at,
                 a.full_name AS author_name,
-                c.title AS category_title
+                c.title AS category_title,
+                COUNT(*) OVER() AS total_items
             FROM books b
             LEFT JOIN authors a ON b.author_id = a.id
             LEFT JOIN categories c ON b.category_id = c.id
@@ -54,8 +57,8 @@ export async function GET(req: NextRequest) {
         if (minPages)  { sql += ` AND b.pages >= $${i}`; params.push(Number(minPages)); i++; }
         if (maxPages)  { sql += ` AND b.pages <= $${i}`; params.push(Number(maxPages)); i++; }
 
-        sql += ` ORDER BY b.title ASC LIMIT $${i}`;
-        params.push(limit);
+        sql += ` ORDER BY b.title ASC LIMIT $${i} OFFSET $${i + 1}`;
+        params.push(limit, offset);
 
         const { rows } = await pool.query(sql, params);
 
@@ -76,7 +79,15 @@ export async function GET(req: NextRequest) {
             category: r.category_title ? { id: r.category_id, title: r.category_title } : undefined,
         }));
 
-        return ApiResponses.ok(books, "Books retrieved successfully");
+        const totalItems = rows.length > 0 ? Number(rows[0].total_items) : 0;
+        const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
+
+        return ApiResponses.ok({
+            data: books,
+            pagination: { currentPage: page, limit, totalItems, totalPages }
+            },
+            "Books retrieved successfully"
+        );
     } catch (error) {
         console.error("Error getting all books:", error);
         return ApiResponses.internalServerError("Failed to get all books");
