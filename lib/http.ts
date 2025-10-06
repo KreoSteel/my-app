@@ -34,6 +34,15 @@ apiClient.interceptors.response.use(
     }
 )
 
+apiClient.interceptors.request.use((config) =>{
+    const token = localStorage.getItem('accessToken')
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+})
+
+
 // Helper methods for common operations
 export const api = {
     // GET request that returns data directly

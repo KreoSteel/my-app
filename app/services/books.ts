@@ -22,25 +22,27 @@ export function useBooks(filters?: BookFilters, page: number = 1, limit: number 
         queryKey: ["books", filters, page, limit, extraParams],
         queryFn: async () => {
             const hasQ = !!filters?.query && filters.query.trim().length > 0;
-            const onlyQ =
-                hasQ && !filters?.minRating && !filters?.minPages && !filters?.maxPages;
-            const basePath = onlyQ ? "/search/books" : "/books";
-            const qs = onlyQ
-                ? (() => { const p = new URLSearchParams(); p.set('q', filters!.query!); return `?${p.toString()}`; })()
-                : toQueryString(filters);
-            const response = await apiClient.get<{
-                data: { data: BookWithDetails[]; pagination: Pagination }
-            }>(
-                `${basePath}${qs}`,
-                {
-                    params: {
-                        page,
-                        limit,
-                        ...extraParams
-                    }
-                }
+            const onlyQ = hasQ && !filters?.minRating && !filters?.minPages && !filters?.maxPages;
+
+            if (onlyQ) {
+                // Unpaginated global search path
+                const params = new URLSearchParams();
+                params.set('q', filters!.query!.trim());
+                // Soft cap results if caller provided a searchLimit in extraParams; default to limit
+                params.set('limit', String((extraParams as any)?.searchLimit ?? limit));
+
+                const searchResp = await apiClient.get<{ data: BookWithDetails[] }>(`/search/books?${params.toString()}`);
+                const books = searchResp.data.data;
+                return { data: books } as { data: BookWithDetails[]; pagination?: Pagination };
+            }
+
+            // Paginated listing path
+            const qs = toQueryString(filters);
+            const pagedResp = await apiClient.get<{ data: { data: BookWithDetails[]; pagination: Pagination } }>(
+                `/books${qs}`,
+                { params: { page, limit, ...extraParams } }
             );
-            return response.data.data; // unwrap ApiResponse to { data, pagination }
+            return pagedResp.data.data; // { data, pagination }
         },
     });
 }

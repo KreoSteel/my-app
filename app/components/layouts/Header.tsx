@@ -24,7 +24,6 @@ export default function Header() {
                 <li><Link href="/authors">Authors</Link></li>
                 <li><Link href="/friends">Friends</Link></li>
                 <li><Link href="/rating">Rating</Link></li>
-                <li><Link href="/profile">Profile</Link></li>
             </ul>
             <div className="absolute left-5 top-5">
                 <DropdownMenu>

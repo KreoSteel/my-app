@@ -12,7 +12,6 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const checkAuth = async () => {
-            // Check if we're on the client side
             if (typeof window === 'undefined') {
                 return
             }

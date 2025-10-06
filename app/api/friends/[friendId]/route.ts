@@ -5,7 +5,7 @@ import { getAuthenticatedUserId } from '@/app/api/lib/authUser';
 import { getUserBooks } from '@/app/api/lib/userBooks';
 
 export async function GET(req: NextRequest, { params }: { params: { friendId: string } }) {
-    const userId = getAuthenticatedUserId(req);
+    const userId = await getAuthenticatedUserId(req);
     if (!userId) {
         return ApiResponses.unauthorized('You must be logged in to view friend profiles');
     }
