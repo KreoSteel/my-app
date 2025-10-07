@@ -13,8 +13,10 @@ import {
 } from "@/app/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
 import { UserCog } from "lucide-react"
+import { useAuth } from "@/app/hooks/useAuth"
 export default function Header() {
     const { setTheme, theme } = useTheme()
+    const { logout } = useAuth()
     return (
         <header className="bg-header-bg p-6 fixed top-0 left-0 w-full z-50 shadow-header-purple">
             <ul className="flex gap-10 items-center justify-center text-header-foreground text-xl font-bold">
@@ -31,16 +33,13 @@ export default function Header() {
                         <Button variant="outline"><UserCog /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56" align="start">
-                        <Link href="/profile">
-                            <DropdownMenuItem>My Account</DropdownMenuItem>
-                        </Link>
                         <Link href="/my-list">
                             <DropdownMenuItem>My Reading List</DropdownMenuItem>
                         </Link>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => setTheme(`${theme === "light" ? "dark" : "light"}`)}>{theme === "light" ? "Dark Theme" : "Light Theme"}</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => console.log("logout")}>
+                        <DropdownMenuItem onClick={logout}>
                             Logout
                         </DropdownMenuItem>
                     </DropdownMenuContent>
